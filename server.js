@@ -151,11 +151,16 @@ export function createApp(overrides = {}) {
   return server;
 }
 
-if (process.env.VERCEL === '1' || (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))) {
+let productionHandler;
+export default function handleVercelRequest(req, res) {
+  // Reutiliza o mesmo pool e o mesmo handler HTTP entre requisições da instância.
+  productionHandler ??= createApp({ vercel: true }).listeners('request')[0];
+  return productionHandler(req, res);
+}
+
+if (process.env.VERCEL !== '1' && process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = numberEnv('PORT', 3000, 1, 65535);
   const server = createApp();
   server.listen(port, process.env.HOST || '127.0.0.1', () => console.log(`Formulário disponível: ${process.env.PUBLIC_ORIGIN || 'http://localhost:3000'}`));
-  if (process.env.VERCEL !== '1') {
-    for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => server.close(() => { void server.whenClosed.then(() => process.exit(0)); }));
-  }
+  for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => server.close(() => { void server.whenClosed.then(() => process.exit(0)); }));
 }

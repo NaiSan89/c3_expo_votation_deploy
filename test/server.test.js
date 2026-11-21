@@ -7,10 +7,13 @@ import { once } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
-import { createApp } from '../server.js';
+import handleVercelRequest, { createApp } from '../server.js';
 import games from '../games.json' with { type: 'json' };
 
 const origin = 'http://localhost:3000';
+test('exporta a função HTTP exigida pelo runtime da Vercel', () => {
+  assert.equal(typeof handleVercelRequest, 'function');
+});
 const adminToken = 'test-admin-token-with-at-least-24-characters';
 const position = () => ({ latitude: -23.540972222222223, longitude: -46.734, accuracy: 10, timestamp: Date.now() });
 async function start(t, overrides = {}) {
