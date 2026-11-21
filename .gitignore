@@ -1,0 +1,6 @@
+.env
+data/
+node_modules/
+.vercel/
+*service-account*.json
+credentials*.json

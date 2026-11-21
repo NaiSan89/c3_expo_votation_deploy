@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#171626">
+  <meta name="description" content="Escolha seu jogo favorito no Festival de Jogos Canal 3 Expo. Votação presencial.">
+  <title>Votação popular · Canal 3 Expo</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#vote-form">Ir para a votação</a>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="/" aria-label="Canal 3 Expo, início"><span class="brand-mark" aria-hidden="true">C3<span>EXPO</span></span><span>CANAL 3 <b>EXPO</b></span></a>
+    <span class="header-label">FESTIVAL DE JOGOS <span>2026</span></span>
+  </div></header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title"><div class="hero-inner">
+      <div class="hero-copy"><span class="eyebrow"><span class="tiny-cross" aria-hidden="true">✚</span> O PRÓXIMO FAVORITO É VOCÊ QUEM ESCOLHE</span>
+        <h1 id="hero-title">Jogue. Descubra.<br><span>Deixe seu voto.</span></h1>
+        <p>Dos clássicos às novas ideias. Celebre quem cria e escolha seu jogo favorito no Festival de Jogos Canal 3 Expo.</p>
+        <div class="hero-tags"><span>Votação popular</span><span>Participação presencial</span></div>
+      </div>
+      <div class="arcade" aria-hidden="true"><div class="arcade-top">PLAYER'S CHOICE</div><div class="arcade-screen"><span class="pixel-heart">♥</span><span>SEU JOGO.<br>SEU VOTO.</span><small>PRESS START</small></div><div class="arcade-controls"><i></i><b></b><b></b></div></div>
+    </div></section>
+    <div class="content-wrap">
+      <section id="completion" class="completion panel" hidden tabindex="-1" aria-labelledby="completion-title"><span class="completion-symbol" aria-hidden="true">✓</span><p class="eyebrow">PARTICIPAÇÃO REGISTRADA</p><h2 id="completion-title">Seu voto faz parte dessa história.</h2><p id="completion-message">Obrigado por valorizar os jogos e quem está por trás deles.</p><p class="muted">Continue explorando o festival e conhecendo novos favoritos.</p></section>
+      <div id="voting-content">
+        <section class="location-panel panel" aria-labelledby="location-title">
+          <div class="location-heading"><span class="location-icon" aria-hidden="true">⌖</span><div><p class="eyebrow purple">VOTAÇÃO NO EVENTO</p><h2 id="location-title">Primeiro, confirme sua presença</h2></div><span class="radius-pill" id="radius-label">Raio de 200 m</span></div>
+          <p>Para participar, você precisa estar na área do evento e permitir o acesso à localização do seu dispositivo.</p>
+          <label class="consent-label"><input id="consent" type="checkbox"><span>Autorizo o uso da minha localização apenas para verificar minha presença no evento. As coordenadas não serão armazenadas.</span></label>
+          <div class="location-actions"><button id="check-location" class="button secondary" type="button" disabled>Verificar minha presença</button><p id="location-status" class="status" role="status" aria-live="polite">Aguardando sua autorização.</p></div>
+          <details class="help"><summary>Precisa de ajuda com a localização?</summary><p>Ative a localização precisa no aparelho e permita o acesso nas configurações do navegador. Se o sinal estiver fraco, tente perto de uma janela ou em uma área aberta. Abra este link diretamente no Chrome ou Safari se o navegador do aplicativo não funcionar.</p><p>Estar perto da borda do perímetro pode impedir a confirmação devido à margem de erro do GPS. A verificação será repetida ao enviar seu voto.</p></details>
+        </section>
+        <form id="vote-form" class="vote-panel panel">
+          <fieldset id="games-fieldset" disabled><legend><span class="eyebrow purple">ESCOLHA DO PÚBLICO</span><span class="legend-title">Qual jogo conquistou você?</span></legend>
+            <p class="section-description">Escolha uma opção entre os jogos do festival. Todos merecem ser descobertos.</p>
+            <div class="filter-row"><label class="search"><span aria-hidden="true">⌕</span><span class="sr-only">Buscar jogo pelo nome</span><input id="search" type="search" placeholder="Buscar um jogo…" autocomplete="off"></label><div class="filter-tabs" role="group" aria-label="Filtrar por categoria"><button type="button" class="filter active" data-category="all" aria-pressed="true">Todos</button><button type="button" class="filter" data-category="INDIE" aria-pressed="false">Indie</button><button type="button" class="filter" data-category="RETRO" aria-pressed="false">Retro</button></div></div>
+            <div class="list-meta"><span id="games-count" role="status">Carregando jogos…</span><span>Uma escolha por voto</span></div>
+            <div id="games-list" class="games-grid"></div>
+            <p id="empty-search" class="empty-search" hidden>Nenhum jogo encontrado. Tente outro nome ou categoria.</p>
+          </fieldset>
+          <div class="vote-footer"><div><p class="selection-label">SUA ESCOLHA</p><p id="selected-game">Nenhum jogo selecionado</p><p id="selected-hint" class="muted" hidden>O jogo selecionado está oculto pelo filtro atual.</p></div><button id="submit-vote" type="submit" class="button primary" disabled>Confirmar meu voto</button></div>
+          <p id="form-status" class="status form-status" role="status" aria-live="polite">Carregando a votação…</p>
+          <p class="fine-print">Após a confirmação, não será possível alterar o voto neste navegador.</p>
+        </form>
+      </div>
+      <footer class="page-footer"><span class="footer-brand">CANAL 3 EXPO <span>·</span> CULTURA QUE SE JOGA.</span><p>A localização é usada somente durante a verificação.<br>O controle de participação é feito por navegador.</p></footer>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "c3-expo-votacao-local",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@vercel/functions": "^3.11.3",
+    "pg": "^8.23.1"
+  }
+}

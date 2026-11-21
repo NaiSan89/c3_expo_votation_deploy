@@ -1,0 +1,4 @@
+# Aponte o DNS do seu domínio para o servidor antes de iniciar o Caddy.
+votacao.seudominio.com.br {
+    reverse_proxy 127.0.0.1:3000
+}
