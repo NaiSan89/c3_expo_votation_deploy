@@ -91,6 +91,8 @@ Abra `/admin` e informe essa chave. Ela é enviada no cabeçalho de autorizaçã
 
 Os resultados vêm do banco de votos e incluem os que ainda aguardam sincronização com o Google. O painel é atualizado ao clicar em **Atualizar resultados**.
 
+Para encerrar os testes, atualize os resultados, clique em **Zerar votação**, digite **APAGAR** e confirme em **Apagar votos**. Isso exclui os votos e envios pendentes, encerra as sessões dos participantes e libera nova participação pelo mesmo navegador após recarregar o formulário. A lista de jogos, a chave do painel e a configuração de abertura são preservadas. Se houver votos novos desde a consulta, o painel pede uma nova confirmação. As linhas já exportadas ao Google Sheets continuam na planilha.
+
 ## Hospedar com Node.js
 
 Para hospedar com SQLite, use um servidor com **Node.js 24+, uma instância e disco persistente**. Para usar PostgreSQL em um servidor contínuo, aplique `postgres.sql` e configure `DATABASE_URL` como na seção da Vercel.

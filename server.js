@@ -91,16 +91,29 @@ export function createApp(overrides = {}) {
         const status = await sync.status();
         send(res, ok && !status.lastError ? 200 : 503, status); return;
       }
-      if (path === '/api/admin/results' && req.method === 'GET') {
+      if (path === '/api/admin/results' && ['GET', 'DELETE'].includes(req.method)) {
         if (!authorized(req, config.adminToken)) {
           send(res, 401, { message: 'Acesso não autorizado.' }); return;
         }
-        const results = await store.results(games);
+        if (req.method === 'DELETE') {
+          if (req.headers.origin !== config.origin || !/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) {
+            send(res, 403, { message: 'Abra o painel no endereço oficial da votação.' }); return;
+          }
+          const payload = await body(req);
+          if (payload?.confirmation !== 'APAGAR' || typeof payload.revision !== 'string' || !/^\d+:\d+$/.test(payload.revision)) {
+            send(res, 400, { message: 'Confirme a exclusão digitando APAGAR.' }); return;
+          }
+          const result = await store.resetVotes(payload.revision);
+          if (result === 'changed') { send(res, 409, { message: 'A apuração mudou. Atualize os resultados antes de confirmar novamente.' }); return; }
+          if (result === 'syncing') { send(res, 409, { message: 'O Google Sheets está sincronizando. Aguarde e tente novamente.' }); return; }
+          res.writeHead(204); res.end(); return;
+        }
+        const { results, revision } = await store.results(games);
         if (new URL(req.url, config.origin).searchParams.get('format') === 'csv') {
           res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="resultados.csv"' });
           res.end('\uFEFFJogo;Votos\r\n' + results.map(row => `"${row.game.replaceAll('"', '""')}";${row.votes}`).join('\r\n')); return;
         }
-        send(res, 200, { total: results.reduce((sum, row) => sum + row.votes, 0), results, sync: await sync.status(), votingOpen: config.votingOpen }); return;
+        send(res, 200, { total: results.reduce((sum, row) => sum + row.votes, 0), results, revision, sync: await sync.status(), votingOpen: config.votingOpen }); return;
       }
       if (req.method !== 'POST' || !['/api/session', '/api/location', '/api/votes'].includes(path)) {
         send(res, 404, { message: 'Página não encontrada.' }); return;
@@ -133,7 +146,8 @@ export function createApp(overrides = {}) {
       if (!position.ok) { send(res, 422, { message: position.message }); return; }
       if (path === '/api/location') { send(res, 200, { message: 'Presença confirmada na área do evento.' }); return; }
       if (!games.includes(payload.game)) { send(res, 400, { message: 'Selecione um jogo da lista.' }); return; }
-      const inserted = await store.insert(voterHash, payload.game);
+      const inserted = await store.insert(voterHash, payload.game, hash(payload.token));
+      if (inserted === null) { send(res, 403, { message: 'Sua sessão expirou. Verifique sua presença novamente.' }); return; }
       if (!inserted) { send(res, 409, { message: 'Este navegador já registrou um voto.' }); return; }
       if (client && config.vercel) waitUntil(sync.trigger());
       else void sync.trigger();

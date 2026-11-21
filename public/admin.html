@@ -5,5 +5,17 @@
 <section id="dashboard" hidden aria-label="Resultados da votação"><div class="admin-toolbar"><button class="button secondary" id="refresh" type="button">Atualizar resultados</button><button class="button primary" id="export" type="button">Baixar CSV</button><button class="button secondary" id="logout" type="button">Sair</button></div><p id="admin-status" class="status admin-status" role="status" aria-live="polite"></p>
 <div class="admin-stats"><div class="panel stat"><span>Votos registrados</span><b id="total">0</b></div><div class="panel stat"><span>Sincronização com Google</span><b id="sync-state">—</b></div><div class="panel stat"><span>Situação da votação</span><b id="voting-state">—</b></div></div>
 <div class="panel admin-info"><p id="sync-message"></p><p id="last-update" class="muted"></p></div>
-<div class="panel results-panel"><table class="results-table"><caption class="sr-only">Votos por jogo, do maior para o menor</caption><thead><tr><th scope="col">Jogo</th><th scope="col">Votos</th></tr></thead><tbody id="results"></tbody></table></div></section>
+<div class="panel results-panel"><table class="results-table"><caption class="sr-only">Votos por jogo, do maior para o menor</caption><thead><tr><th scope="col">Jogo</th><th scope="col">Votos</th></tr></thead><tbody id="results"></tbody></table></div>
+<div class="admin-toolbar"><button class="button reset-button" id="reset-votes" type="button">Zerar votação</button></div>
+<dialog id="reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-description">
+  <h2 id="reset-title">Zerar votação?</h2>
+  <p id="reset-description"></p>
+  <p>Após a exclusão, quem já votou poderá recarregar o formulário e votar novamente. A exclusão é permanente.</p>
+  <p id="reset-sheets" hidden>As linhas já enviadas ao Google Sheets ficam na planilha.</p>
+  <form id="reset-form">
+    <label for="reset-confirmation">Digite <strong>APAGAR</strong> para confirmar.</label>
+    <input id="reset-confirmation" required pattern="APAGAR" autocomplete="off" spellcheck="false">
+    <div class="admin-toolbar"><button id="cancel-reset" type="button" class="button secondary" autofocus>Cancelar</button><button type="submit" class="button reset-button">Apagar votos</button></div>
+  </form>
+</dialog></section>
 <footer class="page-footer"><span class="footer-brand">CANAL 3 EXPO · ORGANIZAÇÃO</span></footer></main></body></html>

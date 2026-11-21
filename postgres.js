@@ -11,13 +11,37 @@ export function openPostgres(connectionString) {
     async hasVoted(hash) {
       return (await query('SELECT 1 FROM votes WHERE voter_hash = $1', [hash])).rowCount > 0;
     },
-    async insert(hash, game) {
-      const result = await query('INSERT INTO votes(voter_hash, game) VALUES ($1, $2) ON CONFLICT (voter_hash) DO NOTHING', [hash, game]);
-      return result.rowCount === 1;
+    async insert(hash, game, sessionHash) {
+      const { rows } = await query(`WITH session AS (
+        SELECT 1 FROM voter_sessions WHERE token_hash = $3 AND voter_hash = $1 AND expires_at > now() FOR SHARE
+      ), inserted AS (
+        INSERT INTO votes(voter_hash, game) SELECT $1, $2 FROM session ON CONFLICT (voter_hash) DO NOTHING RETURNING id
+      ) SELECT EXISTS(SELECT FROM session) AS valid, EXISTS(SELECT FROM inserted) AS saved`, [hash, game, sessionHash]);
+      return rows[0].valid ? rows[0].saved : null;
     },
     async results(games) {
-      const { rows } = await query('SELECT game, count(*)::integer AS votes FROM votes GROUP BY game');
+      const { rows } = await query('SELECT game, count(*)::integer AS votes, max(id) AS last_id FROM votes GROUP BY game');
       return rankResults(games, rows);
+    },
+    async resetVotes(revision) {
+      const db = await pool.connect();
+      try {
+        await db.query('BEGIN');
+        await db.query('LOCK TABLE votes, voter_sessions, request_limits, sheets_sync IN EXCLUSIVE MODE');
+        const { rows: [state] } = await db.query(`SELECT count(*)::text || ':' || COALESCE(max(id), 0)::text AS revision,
+          (SELECT owner IS NOT NULL AND available_at > now() FROM sheets_sync WHERE id = 1) AS syncing FROM votes`);
+        if (state.revision !== revision || state.syncing) {
+          await db.query('ROLLBACK');
+          return state.syncing ? 'syncing' : 'changed';
+        }
+        await db.query(`DELETE FROM votes; DELETE FROM voter_sessions; DELETE FROM request_limits;
+          UPDATE sheets_sync SET owner = NULL, available_at = '-infinity', last_error = NULL, last_success = NULL WHERE id = 1`);
+        await db.query('COMMIT');
+        return 'reset';
+      } catch (err) {
+        await db.query('ROLLBACK');
+        throw err;
+      } finally { db.release(); }
     },
     async createSession(tokenHash, voterHash) {
       await query('DELETE FROM voter_sessions WHERE expires_at <= now()');

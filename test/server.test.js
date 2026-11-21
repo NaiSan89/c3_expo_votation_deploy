@@ -27,8 +27,48 @@ async function start(t, overrides = {}) {
     const response = await post('/api/session', {}); assert.equal(response.status, 200);
     return { token: (await response.json()).token, cookie: response.headers.get('set-cookie').split(';')[0] };
   };
-  return { get, post, session };
+  const reset = (payload, extra = {}) => fetch(url + '/api/admin/results', {
+    method: 'DELETE', headers: { Origin: origin, 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}`, ...extra },
+    body: JSON.stringify(payload)
+  });
+  return { get, post, session, reset };
 }
+
+async function checkReset(a, b) {
+  const results = async () => (await b.get('/api/admin/results', { Authorization: `Bearer ${adminToken}` })).json();
+  const first = await a.session();
+  const vote = (session, server) => server.post('/api/votes', { token: session.token, game: games[0], consent: true, position: position() }, session.cookie);
+  assert.equal((await vote(first, b)).status, 201);
+  const old = { confirmation: 'APAGAR', revision: (await results()).revision };
+  for (const [response, status] of [
+    [await a.reset(old, { Authorization: '' }), 401],
+    [await a.reset(old, { Origin: 'https://outra.example' }), 403],
+    [await a.reset({ ...old, confirmation: '' }), 400]
+  ]) assert.equal(response.status, status);
+  assert.equal((await results()).total, 1);
+  const second = await b.session();
+  assert.equal((await vote(second, a)).status, 201);
+  assert.equal((await a.reset(old)).status, 409);
+  const before = await results();
+  assert.equal(before.total, 2);
+  const confirmed = { ...old, revision: before.revision };
+  assert.equal((await a.reset(confirmed)).status, 204);
+  const after = await results();
+  assert.equal(after.total, 0);
+  assert.equal(after.sync.pending, 0);
+  assert.equal((await vote(first, b)).status, 403);
+  const fresh = await b.post('/api/session', {}, first.cookie);
+  assert.equal(fresh.status, 200);
+  assert.equal((await vote({ cookie: first.cookie, token: (await fresh.json()).token }, a)).status, 201);
+  assert.equal((await b.reset(confirmed)).status, 409);
+  assert.equal((await b.reset(old)).status, 409);
+  assert.equal((await results()).total, 1);
+}
+
+test('organização pode zerar votos de teste e repetir com o mesmo navegador no SQLite', async t => {
+  const app = await start(t);
+  await checkReset(app, app);
+});
 
 test('serve interface, 26 jogos e painel sem expor resultados ou arquivos internos', async t => {
   const { get } = await start(t);
@@ -182,6 +222,14 @@ test('PostgreSQL compartilha sessões, voto único, limites e fila entre instân
         assert.equal(status.pending, 0);
         assert.equal(status.lastError, null);
         assert.ok(status.lastSuccess);
+      });
+      await t.test('reinicia a votação entre instâncias e recusa confirmações antigas', async t => {
+        const a = await start(t, { databaseUrl });
+        const b = await start(t, { databaseUrl });
+        const res = await a.get('/api/admin/results', { Authorization: `Bearer ${adminToken}` });
+        const { revision } = await res.json();
+        assert.equal((await a.reset({ confirmation: 'APAGAR', revision })).status, 204);
+        await checkReset(a, b);
       });
     } finally { await db.end(); }
   } finally {

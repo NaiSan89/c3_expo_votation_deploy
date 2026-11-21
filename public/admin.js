@@ -1,6 +1,7 @@
 const $ = selector => document.querySelector(selector);
 let token = '';
 let busy = false;
+let revision;
 async function request(csv = false) {
   const response = await fetch(`/api/admin/results${csv ? '?format=csv' : ''}`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20000) });
   if (!response.ok) {
@@ -18,6 +19,8 @@ function logout() {
 }
 async function refresh() {
   const data = await (await request()).json();
+  revision = data.revision;
+  $('#reset-sheets').hidden = !data.sync.enabled;
   $('#login').hidden = true; $('#dashboard').hidden = false;
   $('#total').textContent = data.total.toLocaleString('pt-BR');
   $('#sync-state').textContent = !data.sync.enabled ? 'Desativada' : data.sync.pending ? `${data.sync.pending} pendentes` : 'Em dia';
@@ -56,3 +59,33 @@ $('#export').addEventListener('click', async () => {
   finally { setBusy(false); }
 });
 $('#logout').addEventListener('click', logout);
+$('#reset-votes').addEventListener('click', () => {
+  const total = $('#total').textContent;
+  $('#reset-description').textContent = `A apuração exibe ${total} ${total === '1' ? 'voto' : 'votos'}. Confirmar apaga todos os votos registrados.`;
+  $('#reset-form').reset();
+  $('#reset-dialog').showModal();
+});
+$('#cancel-reset').addEventListener('click', () => $('#reset-dialog').close());
+$('#reset-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy) return;
+  $('#reset-dialog').close();
+  setBusy(true);
+  const status = $('#admin-status');
+  status.textContent = 'Zerando votação…';
+  try {
+    const response = await fetch('/api/admin/results', {
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation: $('#reset-confirmation').value, revision }), signal: AbortSignal.timeout(20000)
+    });
+    if (response.status === 401) { logout(); $('#login-status').textContent = 'Entre novamente para acessar a apuração.'; return; }
+    if (!response.ok) throw new Error((await response.json()).message);
+    try { await refresh(); status.textContent = 'Votos apagados. Apuração atualizada.'; }
+    catch { status.textContent = 'Votos apagados. Clique em Atualizar resultados para consultar a nova apuração.'; }
+  } catch (error) {
+    status.textContent = error.message + ' Confira a apuração em Atualizar resultados.';
+  } finally {
+    setBusy(false);
+    if (!$('#dashboard').hidden) { status.scrollIntoView({ block: 'center' }); $('#refresh').focus({ preventScroll: true }); }
+  }
+});
